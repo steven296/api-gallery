@@ -9,7 +9,10 @@ use BestShop\ObjectModel;
 class Image extends ObjectModel {
 	/** @var $id Image ID */
 	public $id;
-	
+    
+    /** @var int $album_id */
+    public $album_id;
+    
 	/** @var string $name */
     public $name;
     
@@ -44,6 +47,7 @@ class Image extends ObjectModel {
         'table' => 'image',
         'primary' => 'image_id',
         'fields' => array(
+            'album_id' => array('type' => self::TYPE_INT, 'validate' => 'isInt', 'size' => 11),
             'name' => array('type' => self::TYPE_STRING, 'required' => true, 'validate' => 'isString', 'size' => 32),
             'description' => array('type' => self::TYPE_STRING, 'validate' => 'isString', 'size' => 200),
 			'image' => array('type' => self::TYPE_NOTHING, 'required' => true),

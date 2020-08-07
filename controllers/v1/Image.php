@@ -6,6 +6,7 @@ use Db;
 use BestShop\Route;
 use BestShop\Database\DbQuery;
 use BestShop\Image\Image as ImageObject;
+use BestShop\Album\Album as AlbumObject;
 use BestShop\Util\ArrayUtils;
 use BestShop\Validate;
 
@@ -30,12 +31,14 @@ class Image extends Route {
     
 	public function addImage() {
 		$api = $this->api;
+		$data = $api->request()->post(); 
+		
 		$payload = $api->request()->post(); 
-
 		$name = ArrayUtils::get($payload, 'name');
 		$description = ArrayUtils::get($payload, 'description');
+		$album_id = ArrayUtils::get($payload, 'album_id');
 		
-		if (!Validate::isGenericName($name)) {
+		if (!Validate::isGenericName($name) || $name == "") {
 			return $api->response([
 				'success' => false,
 				'message' => 'ingrese un nombre valido para la imagen'
@@ -48,11 +51,27 @@ class Image extends Route {
 				'message' => 'ingrese una descripcion valida para la imagen'
 			]);
 		}
+
+		if(!Validate::isInt($album_id)) {
+			return $api->response([
+				'success' => false,
+				'message' => 'Enter a valid album ID of the image'
+			]);
+		}
+
+		$album = new AlbumObject( (int) $album_id );
+		if (!Validate::isLoadedObject($album)) {
+			return $api->response([
+				'success' => false,
+				'message' => 'The album ID (' . $album_id . ') does not exist'
+			]);
+		}
 		
 		$image = new ImageObject();
 		$image->name = $name;
 		$image->description = $description;
 		$image->image = '';
+		$image->album_id = $album->id;
 
 		$ok = $image->save();
 
@@ -75,6 +94,11 @@ class Image extends Route {
 				'extension' => $image->extension,
 				'width' => $image->width,
 				'height' => $image->height,
+				'album' => [
+					'album_id' => $album->id,
+					'name' => $album->name,
+					'description' => $album->description,
+				],
 			]
 		]);
 	}
@@ -90,6 +114,8 @@ class Image extends Route {
 				'message' => 'Image was not found'
 			]);
 		}
+
+		$album = new AlbumObject( $image->album_id );
 		
 		return $api->response([
 			'success' => true,
@@ -103,6 +129,11 @@ class Image extends Route {
 				'extension' => $image->extension,
 				'width' => $image->width,
 				'height' => $image->height,
+				'album' => [
+					'album_id' => $album->id,
+					'name' => $album->name,
+					'description' => $album->description,
+				],
 			]
 		]);
 	}
@@ -144,6 +175,26 @@ class Image extends Route {
 			$image->description = $description;
 		}
 		
+		if (ArrayUtils::has($payload, 'album_id')) {
+			$album_id = ArrayUtils::get($payload, 'album_id');
+			if(!Validate::isInt($album_id)) {
+				return $api->response([
+					'success' => false,
+					'message' => 'Enter a valid album ID of the image'
+				]);
+			}
+
+			$album = new AlbumObject( (int) $album_id );
+			if (!Validate::isLoadedObject($album)) {
+				return $api->response([
+					'success' => false,
+					'message' => 'The album ID (' . $album_id . ') does not exist'
+				]);
+			}
+
+			$image->album_id = $album->id;
+		}
+
 		$ok = $image->save();
 
 		if (!$ok) {
@@ -165,6 +216,11 @@ class Image extends Route {
 				'extension' => $image->extension,
 				'width' => $image->width,
 				'height' => $image->height,
+				'album' => [
+					'album_id' => $album->id,
+					'name' => $album->name,
+					'description' => $album->description,
+				],
 			]
 		]);
 		
@@ -174,7 +230,7 @@ class Image extends Route {
 		$api = $this->api;
 
 		$image = new ImageObject( (int) $imageId );
-
+		
 		//Comprobamos que no este vacio nuestro input file.
 		if (file_exists($_FILES['file-input']['tmp_name'])) {
 			//obtenemos el ancho y alto de la imagen

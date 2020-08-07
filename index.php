@@ -94,6 +94,15 @@ $api->group('/api', function () use ($api) {
 		/** search Images */
 		$api->get('/search?', '\BestShop\v1\Image:searchImages')->name('search_images');
 
+		/** Grouping Album Endpoints */
+		$api->group('/albums', function () use ($api) {
+			/** Get all Albums */
+			$api->get('/?', '\BestShop\v1\Album:getAlbums')->name('get_albums');
+			
+			/** Add a Album */
+			$api->post('/?', '\BestShop\v1\Album:addAlbum')->name('add_album');
+	
+		});
 	});
 });
 
